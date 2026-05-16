@@ -2,12 +2,12 @@
   <title>HAX Tactics</title>
 
   
-  <rect width="512" height="512" rx="0" ry="0" fill="#0a0e1a"></rect>
+  <rect width="512" height="512" rx="0" ry="0" fill="#1F1F23"></rect>
 
   
   <defs>
     <pattern id="scan" width="4" height="4" patternUnits="userSpaceOnUse">
-      <rect width="4" height="3" fill="#0a0e1a"></rect>
+      <rect width="4" height="3" fill="#1F1F23"></rect>
       <rect y="3" width="4" height="1" fill="#ffffff" opacity="0.025"></rect>
     </pattern>
   </defs>
