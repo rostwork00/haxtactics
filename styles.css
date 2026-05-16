@@ -54,7 +54,7 @@ body.sidebar-collapsed .side-expand {
 
 /* Collapse button (inside sidebar) */
 .side-collapse {
-  margin-left: auto;
+  align-self: flex-end;
   appearance: none;
   background: transparent;
   border: 1px solid transparent;
@@ -143,15 +143,6 @@ body.sidebar-collapsed .side-expand {
 }
 :root[data-theme="dark"]  .brand-img.is-light { display: none; }
 :root[data-theme="light"] .brand-img.is-dark  { display: none; }
-.brand-collapse {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  z-index: 2;
-  background: var(--glass-strong);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-}
 
 .hr {
   height: 1px;
