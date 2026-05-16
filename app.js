@@ -1189,7 +1189,7 @@ function playNextStep() {
   const idx = ++state.playing.stepIdx;
   state.playing.currentIdx = idx;
   if (idx >= state.steps.length) {
-    finishPlayback();
+    finishPlayback(false);
     return;
   }
   const step = state.steps[idx];
@@ -1230,11 +1230,25 @@ function playNextStep() {
   state.playing.timer = setTimeout(playNextStep, dur + 60);
 }
 
-function finishPlayback() {
+// restorePositions = true → Stop button: rewind pieces to the state
+//                            captured at the start of playback.
+// restorePositions = false → natural end (ran past the last step):
+//                            leave pieces at the last step's destination
+//                            so the final play is what the user sees.
+function finishPlayback(restorePositions = true) {
   if (!state.playing) return;
   if (state.playing.timer) clearTimeout(state.playing.timer);
   state.playing.restore.forEach(r => {
-    r.piece.fx = r.fx; r.piece.fy = r.fy;
+    if (restorePositions) {
+      r.piece.fx = r.fx; r.piece.fy = r.fy;
+    } else {
+      // Snap any in-flight tween to its endpoint in case a frame was
+      // dropped between the last anim tick and this callback.
+      const a = r.piece.anim;
+      if (a && a.kind === "tween") {
+        r.piece.fx = a.toFx; r.piece.fy = a.toFy;
+      }
+    }
     r.piece.arrows = r.arrows;
     r.piece.stepStartFx = r.stepStartFx;
     r.piece.stepStartFy = r.stepStartFy;
