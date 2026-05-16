@@ -1,4 +1,9 @@
 {
+  "redirects": [
+    { "source": "/v3-pro", "destination": "/", "permanent": true },
+    { "source": "/v3-pro/", "destination": "/", "permanent": true },
+    { "source": "/v3-pro/index.html", "destination": "/", "permanent": true }
+  ],
   "rewrites": [
     { "source": "/", "destination": "/v3-pro/index.html" }
   ]
