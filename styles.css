@@ -9,7 +9,7 @@ body.layout-pro {
   /* Vertical space reserved above the dispenser strip for the floating
      annotation toolbar so the field never sits underneath it. */
   --canvas-bottom-toolbar: 56px;
-  --canvas-top-inset: 50px;
+  --canvas-top-inset: 72px;
 }
 
 .sidebar {
