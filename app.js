@@ -16,7 +16,7 @@ const FIELD_PRESETS = {
 // Apple-clean: subtle lines, no neon glow, ample contrast.
 const FIELD_THEMES = {
   light: {
-    bg:         "#F0EAD6",          // milky eggshell matches UI surface
+    bg:         "#FAF6E9",          // light milky cream — sidebar stays the accent
     line:       "rgba(24,22,18,0.55)",
     lineGlow:   null,
     netColor:   "rgba(24,22,18,0.28)",
@@ -55,10 +55,15 @@ const PIECE_STYLES = {
   ball: { stroke: "#F4F3EE", inner: "#CBC9C2" },
 };
 
-// Resolved per-render so ball auto-inverts on light theme.
+// Resolved per-render so pieces match the field bg on light theme:
+// red/blue keep their colored stroke but the interior is the field color,
+// giving a hollow-ring look. The ball stays dark to remain visible.
 function pieceStyleFor(kind) {
-  if (kind === "ball" && state.themeKey === "light") {
-    return { stroke: "#181614", inner: "#3b3a36" };
+  if (state.themeKey === "light") {
+    if (kind === "ball") return { stroke: "#181614", inner: "#3b3a36" };
+    const fieldBg = FIELD_THEMES.light.bg;
+    if (kind === "red")  return { stroke: "#E5484D", inner: fieldBg };
+    if (kind === "blue") return { stroke: "#4F7CFF", inner: fieldBg };
   }
   return PIECE_STYLES[kind];
 }
