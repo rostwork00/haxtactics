@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://haxtactics.vercel.app/sitemap.xml
