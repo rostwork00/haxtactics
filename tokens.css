@@ -1,0 +1,362 @@
+/* ============================================================
+   HAXTACTICS — shared design tokens (light + dark)
+   Apple-clean direction. Single warm accent: soft orange.
+   ============================================================ */
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap");
+
+:root,
+:root[data-theme="dark"] {
+  /* surfaces */
+  --bg:        #1E1E22;
+  --bg-elev:   #26262B;
+  --surface:   #2D2D32;
+  --surface-2: #35353B;
+  --border:    rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.14);
+  --hairline:  rgba(255, 255, 255, 0.05);
+
+  /* text */
+  --text:      #F4F3EE;
+  --text-2:    #C8C7C2;
+  --text-dim:  #8B8A85;
+  --text-mute: #5C5B57;
+
+  /* accent — warm orange */
+  --accent:        #FF8A4C;
+  --accent-hover:  #FFA371;
+  --accent-press:  #F4773B;
+  --accent-soft:   rgba(255, 138, 76, 0.16);
+  --accent-ghost:  rgba(255, 138, 76, 0.08);
+
+  /* team semantic colors */
+  --red:    #FF6168;
+  --blue:   #6E8DFF;
+
+  /* shadows — soft, Apple-clean */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.32), 0 0 0 0.5px rgba(255,255,255,0.04) inset;
+  --shadow-md: 0 6px 24px -8px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0,0,0,0.22), 0 0 0 0.5px rgba(255,255,255,0.05) inset;
+  --shadow-lg: 0 24px 60px -20px rgba(0, 0, 0, 0.75), 0 8px 24px -8px rgba(0,0,0,0.4), 0 0 0 0.5px rgba(255,255,255,0.05) inset;
+
+  /* glass surfaces */
+  --glass:     rgba(23, 23, 26, 0.72);
+  --glass-strong: rgba(23, 23, 26, 0.88);
+
+  --radius-sm: 8px;
+  --radius:    12px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+  --radius-pill: 999px;
+
+  --font-sans: "Inter", "SF Pro Text", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", "Menlo", ui-monospace, monospace;
+}
+
+:root[data-theme="light"] {
+  --bg:        #F2F0E9;
+  --bg-elev:   #FBFAF6;
+  --surface:   #FFFFFF;
+  --surface-2: #F6F4ED;
+  --border:    rgba(24, 22, 18, 0.10);
+  --border-strong: rgba(24, 22, 18, 0.18);
+  --hairline:  rgba(24, 22, 18, 0.06);
+
+  --text:      #181614;
+  --text-2:    #3B3A36;
+  --text-dim:  #7C786E;
+  --text-mute: #B0AC9F;
+
+  --accent:        #F4773B;
+  --accent-hover:  #FF8A4C;
+  --accent-press:  #DD6422;
+  --accent-soft:   rgba(244, 119, 59, 0.13);
+  --accent-ghost:  rgba(244, 119, 59, 0.06);
+
+  --red:    #E5484D;
+  --blue:   #4F7CFF;
+
+  --shadow-sm: 0 1px 2px rgba(24, 22, 18, 0.08);
+  --shadow-md: 0 8px 24px -10px rgba(24, 22, 18, 0.18), 0 2px 6px rgba(24, 22, 18, 0.06);
+  --shadow-lg: 0 24px 60px -20px rgba(24, 22, 18, 0.28), 0 8px 24px -8px rgba(24, 22, 18, 0.12);
+
+  --glass:     rgba(255, 255, 255, 0.78);
+  --glass-strong: rgba(255, 255, 255, 0.92);
+}
+
+/* ============================================================
+   Reset + base
+   ============================================================ */
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-feature-settings: "ss01", "cv11", "tnum";
+  overflow: hidden;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 380ms cubic-bezier(.4,0,.2,1),
+              color 380ms cubic-bezier(.4,0,.2,1);
+}
+
+body { display: flex; flex-direction: column; }
+
+/* ============================================================
+   Canvas stage — fills available area
+   ============================================================ */
+.stage {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+  background: var(--bg);
+  transition: background-color 380ms cubic-bezier(.4,0,.2,1);
+}
+#board {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: default;
+}
+
+/* ============================================================
+   Shared atoms (used by all three variants)
+   ============================================================ */
+
+.brand-mark {
+  font-family: var(--font-sans);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: var(--text);
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0;
+}
+.brand-mark .dot {
+  display: inline-block;
+  width: 0.45em;
+  height: 0.45em;
+  border-radius: 999px;
+  background: var(--accent);
+  margin-right: 0.4em;
+  transform: translateY(-0.05em);
+}
+.brand-mark .sub {
+  color: var(--accent);
+  font-weight: 800;
+}
+.brand-mark .tag {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 0.55em;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-left: 0.85em;
+  padding: 2px 7px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  transform: translateY(-0.18em);
+}
+
+/* Field-preset select + theme select shared style */
+.field-select {
+  appearance: none;
+  background: transparent;
+  color: var(--text);
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 6px 24px 6px 10px;
+  font: 500 13px/1 var(--font-sans);
+  letter-spacing: 0.005em;
+  outline: none;
+  cursor: pointer;
+  background-image:
+    linear-gradient(45deg, transparent 50%, currentColor 50%),
+    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position:
+    right 12px top 50%,
+    right 8px top 50%;
+  background-size: 4px 4px, 4px 4px;
+  background-repeat: no-repeat;
+  opacity: 0.92;
+  transition: opacity 150ms, color 150ms;
+}
+.field-select:hover { opacity: 1; color: var(--accent); }
+.field-select option {
+  background: var(--surface);
+  color: var(--text);
+}
+
+/* Tiny segmented label-above-control wrapper */
+.field-ctl {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.field-ctl .lbl {
+  font: 500 10px/1 var(--font-mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-mute);
+  padding-left: 10px;
+}
+
+/* Action buttons (icon + text) */
+.act {
+  appearance: none;
+  background: transparent;
+  border: none;
+  color: var(--text-2);
+  font: 500 13px/1 var(--font-sans);
+  letter-spacing: 0.005em;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 150ms, color 150ms, transform 80ms;
+}
+.act:hover { background: var(--accent-ghost); color: var(--accent); }
+.act:active { transform: scale(0.97); }
+.act .ico {
+  width: 14px; height: 14px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex-shrink: 0;
+}
+.act.danger:hover { background: rgba(229, 72, 77, 0.10); color: var(--red); }
+
+/* Vertical divider */
+.div-v {
+  width: 1px;
+  background: var(--border);
+  height: 22px;
+  margin: 0 4px;
+  flex-shrink: 0;
+}
+
+/* Sun / Moon theme toggle */
+.theme-toggle {
+  --size: 32px;
+  width: var(--size);
+  height: var(--size);
+  border-radius: 999px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  cursor: pointer;
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  transition: background 180ms, border-color 180ms, color 180ms;
+}
+.theme-toggle:hover {
+  background: var(--accent-ghost);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.theme-toggle svg {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: opacity 280ms cubic-bezier(.4,0,.2,1),
+              transform 280ms cubic-bezier(.4,0,.2,1);
+  position: absolute;
+}
+.theme-toggle .sun  { opacity: 0; transform: rotate(-90deg) scale(0.5); }
+.theme-toggle .moon { opacity: 1; transform: rotate(0) scale(1); }
+:root[data-theme="light"] .theme-toggle .sun  { opacity: 1; transform: rotate(0) scale(1); }
+:root[data-theme="light"] .theme-toggle .moon { opacity: 0; transform: rotate(90deg) scale(0.5); }
+
+/* Shortcuts floating card */
+.shortcuts-card {
+  position: absolute;
+  background: var(--glass);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: 14px 16px;
+  font: 500 12px/1.5 var(--font-sans);
+  color: var(--text-2);
+  min-width: 220px;
+  z-index: 5;
+}
+.shortcuts-card .title {
+  font: 600 10px/1 var(--font-mono);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-mute);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.shortcuts-card .title::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--accent);
+}
+.shortcuts-card .row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 4px 0;
+}
+.shortcuts-card .row + .row { border-top: 1px solid var(--hairline); }
+.shortcuts-card .row .lab { color: var(--text-2); }
+.shortcuts-card .kbd-group { display: inline-flex; gap: 4px; }
+.shortcuts-card kbd {
+  font: 500 11px/1 var(--font-mono);
+  background: var(--surface-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 3px 6px;
+  min-width: 18px;
+  display: inline-block;
+  text-align: center;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.04);
+}
+
+/* Status pill (counts) */
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font: 500 12px/1 var(--font-mono);
+  color: var(--text-dim);
+  letter-spacing: 0.04em;
+}
+.status .item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.status .swatch {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: currentColor;
+}
+.status .item.red  { color: var(--red); }
+.status .item.blue { color: var(--blue); }
+.status .item.arr  { color: var(--accent); }
