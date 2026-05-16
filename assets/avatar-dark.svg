@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="HAX Tactics avatar">
+  <title>HAX Tactics</title>
+
+  
+  <rect width="512" height="512" rx="0" ry="0" fill="#0a0e1a"></rect>
+
+  
+  <defs>
+    <pattern id="scan" width="4" height="4" patternUnits="userSpaceOnUse">
+      <rect width="4" height="3" fill="#0a0e1a"></rect>
+      <rect y="3" width="4" height="1" fill="#ffffff" opacity="0.025"></rect>
+    </pattern>
+  </defs>
+  <rect width="512" height="512" fill="url(#scan)"></rect>
+
+  
+  <g stroke="#f0f4ff" stroke-width="2" opacity="0.5" fill="none">
+    <path d="M28 50 V28 H50"></path>
+    <path d="M462 28 H484 V50"></path>
+    <path d="M484 462 V484 H462"></path>
+    <path d="M50 484 H28 V462"></path>
+  </g>
+
+  
+  <g font-family="ui-monospace, &#39;JetBrains Mono&#39;, &#39;SF Mono&#39;, Menlo, Consolas, monospace" fill="#f0f4ff" opacity="0.5">
+    <text x="36" y="56" font-size="14" letter-spacing="2.5">◊ BOOT</text>
+    <text x="476" y="56" font-size="14" letter-spacing="2.5" text-anchor="end">TERMINAL</text>
+  </g>
+
+  
+  <g font-family="ui-monospace, &#39;JetBrains Mono&#39;, &#39;SF Mono&#39;, Menlo, Consolas, monospace" fill="#f0f4ff" opacity="0.55">
+    <text x="56" y="160" font-size="22">$ ./load tactics.brd</text>
+    <text x="56" y="190" font-size="22">&gt; ok · board ready</text>
+  </g>
+
+  
+  <g font-family="ui-monospace, &#39;JetBrains Mono&#39;, &#39;SF Mono&#39;, Menlo, Consolas, monospace" font-weight="700">
+    <text x="56" y="328" font-size="170" letter-spacing="2" fill="#f0f4ff">HX</text>
+  </g>
+  
+  <rect x="262" y="240" width="40" height="100" fill="#ff6b00">
+    
+  </rect>
+  
+  <rect x="262" y="240" width="40" height="100" fill="#ff6b00" opacity="0.35" filter="blur(8px)">
+    
+  </rect>
+
+  
+  <line x1="36" y1="420" x2="476" y2="420" stroke="#f0f4ff" stroke-width="1" opacity="0.15"></line>
+
+  <g font-family="ui-monospace, &#39;JetBrains Mono&#39;, &#39;SF Mono&#39;, Menlo, Consolas, monospace" fill="#f0f4ff" opacity="0.55" font-size="14" letter-spacing="4">
+    <text x="36" y="452">HAX·TACTICS</text>
+    <text x="476" y="452" text-anchor="end">TACTICAL BOARD</text>
+  </g>
+
+  <g font-family="ui-monospace, &#39;JetBrains Mono&#39;, &#39;SF Mono&#39;, Menlo, Consolas, monospace" fill="#f0f4ff" opacity="0.35" font-size="11" letter-spacing="2.5">
+    <text x="36" y="478">READY</text>
+    <text x="476" y="478" text-anchor="end">0x80</text>
+  </g>
+</svg>

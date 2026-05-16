@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="HAX Tactics">
+  <title>HAX Tactics</title>
+
+  
+  <defs>
+    <clipPath id="c"><circle cx="128" cy="128" r="128"></circle></clipPath>
+    <pattern id="scanC" width="3" height="3" patternUnits="userSpaceOnUse">
+      <rect width="3" height="2" fill="#0a0e1a"></rect>
+      <rect y="2" width="3" height="1" fill="#ffffff" opacity="0.03"></rect>
+    </pattern>
+  </defs>
+
+  <g clip-path="url(#c)">
+    <rect width="256" height="256" fill="#0a0e1a"></rect>
+    <rect width="256" height="256" fill="url(#scanC)"></rect>
+
+    
+    <circle cx="128" cy="128" r="120" fill="none" stroke="#f0f4ff" stroke-width="1" opacity="0.18"></circle>
+    <circle cx="128" cy="128" r="120" fill="none" stroke="#ff6b00" stroke-width="1.5" opacity="0.5" stroke-dasharray="2 6"></circle>
+
+    
+    <text x="128" y="78" font-family="ui-monospace, &#39;JetBrains Mono&#39;, &#39;SF Mono&#39;, Menlo, Consolas, monospace" font-size="11" fill="#f0f4ff" opacity="0.55" text-anchor="middle" letter-spacing="2">&gt; tactics.brd</text>
+
+    
+    <text x="100" y="170" font-family="ui-monospace, &#39;JetBrains Mono&#39;, &#39;SF Mono&#39;, Menlo, Consolas, monospace" font-weight="700" font-size="92" letter-spacing="2" fill="#f0f4ff" text-anchor="middle">HX</text>
+
+    
+    <rect x="152" y="105" width="22" height="60" fill="#ff6b00">
+      
+    </rect>
+
+    
+    <text x="128" y="210" font-family="ui-monospace, &#39;JetBrains Mono&#39;, &#39;SF Mono&#39;, Menlo, Consolas, monospace" font-size="10" fill="#f0f4ff" opacity="0.5" text-anchor="middle" letter-spacing="4">HAX·TACTICS</text>
+  </g>
+</svg>
