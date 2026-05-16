@@ -1,11 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="HAX Tactics avatar">
   <title>HAX Tactics</title>
 
-  <rect width="512" height="512" fill="#FBFAF6"></rect>
+  <rect width="512" height="512" fill="#F5EDDF"></rect>
 
   <defs>
     <pattern id="scanL" width="4" height="4" patternUnits="userSpaceOnUse">
-      <rect width="4" height="3" fill="#FBFAF6"></rect>
+      <rect width="4" height="3" fill="#F5EDDF"></rect>
       <rect y="3" width="4" height="1" fill="#000000" opacity="0.025"></rect>
     </pattern>
   </defs>
