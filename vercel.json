@@ -1,0 +1,5 @@
+{
+  "rewrites": [
+    { "source": "/", "destination": "/v3-pro/index.html" }
+  ]
+}
