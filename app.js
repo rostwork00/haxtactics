@@ -16,7 +16,7 @@ const FIELD_PRESETS = {
 // Apple-clean: subtle lines, no neon glow, ample contrast.
 const FIELD_THEMES = {
   light: {
-    bg:         "#F2F0E9",          // warm off-white matches UI surface
+    bg:         "#F0EAD6",          // milky eggshell matches UI surface
     line:       "rgba(24,22,18,0.55)",
     lineGlow:   null,
     netColor:   "rgba(24,22,18,0.28)",

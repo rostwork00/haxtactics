@@ -53,7 +53,7 @@
 }
 
 :root[data-theme="light"] {
-  --bg:        #F2F0E9;
+  --bg:        #F0EAD6;
   --bg-elev:   #F5EDDF;
   --surface:   #FFFFFF;
   --surface-2: #F6F4ED;
