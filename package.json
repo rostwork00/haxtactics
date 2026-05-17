@@ -1,0 +1,22 @@
+{
+  "name": "haxtactics",
+  "version": "1.0.0",
+  "description": "Tactical Board for Haxball & Futsal",
+  "type": "module",
+  "scripts": {
+    "build": "echo 'No build step required for vanilla HTML project'",
+    "lint": "echo 'No linter configured'",
+    "test": "echo 'No tests configured'"
+  },
+  "keywords": [
+    "haxball",
+    "tactics",
+    "futsal",
+    "tactical-board"
+  ],
+  "author": "haxdev",
+  "license": "ISC",
+  "dependencies": {
+    "@vercel/speed-insights": "^2.0.0"
+  }
+}

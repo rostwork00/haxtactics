@@ -56,9 +56,11 @@
   <link rel="stylesheet" href="/tokens.css" />
   <link rel="stylesheet" href="/styles.css" />
 
-  <!-- Vercel Web Analytics + Speed Insights (auto-injected for vanilla sites) -->
+  <!-- Vercel Web Analytics (auto-injected for vanilla sites) -->
   <script defer src="/_vercel/insights/script.js"></script>
-  <script defer src="/_vercel/speed-insights/script.js"></script>
+  
+  <!-- Vercel Speed Insights (using @vercel/speed-insights package) -->
+  <script type="module" src="/speed-insights-init.js"></script>
 </head>
 <body class="layout-pro">
   <aside class="sidebar">
