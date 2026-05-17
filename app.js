@@ -1230,30 +1230,55 @@ function playNextStep() {
   state.playing.timer = setTimeout(playNextStep, dur + 60);
 }
 
-// restorePositions = true → Stop button: rewind pieces to the state
-//                            captured at the start of playback.
+// restorePositions = true → Stop button: rewind pieces and their arrows
+//                            to the state captured at the start of playback.
 // restorePositions = false → natural end (ran past the last step):
 //                            leave pieces at the last step's destination
-//                            so the final play is what the user sees.
+//                            and overlay the last step's move as an arrow
+//                            so the user sees what just played.
 function finishPlayback(restorePositions = true) {
   if (!state.playing) return;
   if (state.playing.timer) clearTimeout(state.playing.timer);
-  state.playing.restore.forEach(r => {
-    if (restorePositions) {
+
+  if (restorePositions) {
+    state.playing.restore.forEach(r => {
       r.piece.fx = r.fx; r.piece.fy = r.fy;
-    } else {
-      // Snap any in-flight tween to its endpoint in case a frame was
-      // dropped between the last anim tick and this callback.
+      r.piece.arrows = r.arrows;
+      r.piece.stepStartFx = r.stepStartFx;
+      r.piece.stepStartFy = r.stepStartFy;
+      r.piece.anim = null;
+    });
+  } else {
+    // Snap any in-flight tween to its endpoint (in case a frame was
+    // dropped between the last anim tick and this callback), restore
+    // stepStart anchors but leave fx/fy at the last step's destination.
+    state.playing.restore.forEach(r => {
       const a = r.piece.anim;
       if (a && a.kind === "tween") {
         r.piece.fx = a.toFx; r.piece.fy = a.toFy;
       }
+      r.piece.stepStartFx = r.stepStartFx;
+      r.piece.stepStartFy = r.stepStartFy;
+      r.piece.anim = null;
+    });
+    // Overlay the last step's move as a visible arrow on each piece.
+    const lastStep = state.steps[state.steps.length - 1];
+    if (lastStep) {
+      state.pieces.forEach(p => {
+        const m = lastStep.moves.find(x => x.pieceId === p.id);
+        if (m && Math.hypot(m.toFx - m.fromFx, m.toFy - m.fromFy) > 0.001) {
+          p.arrows = [{
+            fx1: m.fromFx, fy1: m.fromFy,
+            fx2: m.toFx,   fy2: m.toFy,
+            width: 3.25, glow: false,
+          }];
+        } else {
+          p.arrows = [];
+        }
+      });
     }
-    r.piece.arrows = r.arrows;
-    r.piece.stepStartFx = r.stepStartFx;
-    r.piece.stepStartFy = r.stepStartFy;
-    r.piece.anim = null;
-  });
+  }
+
   state.playing = null;
   notifyStepsChange();
 }
@@ -1278,13 +1303,79 @@ function exportSnapshotPNG() {
     const a = document.createElement("a");
     const stamp = new Date().toISOString().replace(/[:.]/g,"-").slice(0,19);
     a.href = url;
-    a.download = `haxtactics-step${state.steps.length + 1}-${stamp}.png`;
+    a.download = `haxtactics-snapshot-${stamp}.png`;
     document.body.appendChild(a);
     a.click();
     a.remove();
   } catch (e) {
     state.exporting = false;
     console.error("PNG export failed:", e);
+  }
+}
+
+// Render and download a PNG for a specific step. Pieces are placed at the
+// step's end positions and every saved step from 0 up to stepIdx is drawn
+// as a cumulative arrow chain — so step 4's PNG carries arrows from steps
+// 1-4. Live state is restored before returning.
+function exportStepPNG(stepIdx) {
+  if (!Number.isInteger(stepIdx) || stepIdx < 0 || stepIdx >= state.steps.length) return;
+
+  const saved = state.pieces.map(p => ({
+    piece: p,
+    fx: p.fx, fy: p.fy,
+    arrows: [...p.arrows],
+    anim: p.anim,
+  }));
+  const savedExporting = state.exporting;
+
+  try {
+    // Apply cumulative moves up to and including stepIdx for every piece.
+    state.pieces.forEach(p => {
+      let endFx = p.fx, endFy = p.fy;
+      const arrows = [];
+      for (let i = 0; i <= stepIdx; i++) {
+        const m = state.steps[i].moves.find(x => x.pieceId === p.id);
+        if (!m) continue;
+        if (Math.hypot(m.toFx - m.fromFx, m.toFy - m.fromFy) > 0.001) {
+          arrows.push({
+            fx1: m.fromFx, fy1: m.fromFy,
+            fx2: m.toFx,   fy2: m.toFy,
+            width: 3.25, glow: false,
+          });
+        }
+        endFx = m.toFx; endFy = m.toFy;
+      }
+      p.fx = endFx; p.fy = endFy;
+      p.arrows = arrows;
+      p.anim = null;
+    });
+
+    state.exporting = true;
+    state.fieldRect = computeFieldRect();
+    updatePieceScreenCoords();
+    drawField();
+    drawArrows();
+    drawPieces();
+    drawAnnotations();
+    const url = state.canvas.toDataURL("image/png");
+
+    const a = document.createElement("a");
+    const stamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+    a.href = url;
+    a.download = `haxtactics-step${stepIdx + 1}-${stamp}.png`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  } catch (e) {
+    console.error("Per-step PNG export failed:", e);
+  } finally {
+    state.exporting = savedExporting;
+    saved.forEach(s => {
+      s.piece.fx = s.fx;
+      s.piece.fy = s.fy;
+      s.piece.arrows = s.arrows;
+      s.piece.anim = s.anim;
+    });
   }
 }
 
@@ -2097,6 +2188,7 @@ function wireUI() {
     isPlaying:    () => !!state.playing,
     playingStep:  () => state.playing ? state.playing.stepIdx : -1,
     exportPNG:    exportSnapshotPNG,
+    exportStepPNG,
 
     // Mode
     getMode:      () => state.mode,

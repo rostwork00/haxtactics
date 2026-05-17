@@ -615,7 +615,8 @@ body.sidebar-collapsed .side-expand {
   color: var(--text-2);
   flex: 1;
 }
-.step-del {
+.step-del,
+.step-png {
   appearance: none;
   background: transparent;
   border: none;
@@ -628,12 +629,19 @@ body.sidebar-collapsed .side-expand {
   opacity: 0;
   transition: opacity 150ms, color 150ms, background 150ms;
 }
-.step-row:hover .step-del { opacity: 1; }
+.step-row:hover .step-del,
+.step-row:hover .step-png { opacity: 1; }
 .step-del:hover { background: rgba(229,72,77,0.10); color: var(--red); }
+.step-png:hover { background: var(--accent-ghost); color: var(--accent); }
 .step-del svg {
   width: 11px; height: 11px;
   stroke: currentColor; fill: none;
   stroke-width: 2; stroke-linecap: round;
+}
+.step-png svg {
+  width: 12px; height: 12px;
+  stroke: currentColor; fill: none;
+  stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round;
 }
 
 /* Mode segmented (Sandbox / Steps) — reuses theme-seg styling with tweaks */

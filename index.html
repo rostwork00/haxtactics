@@ -165,16 +165,10 @@
           <span class="pending-badge" data-pending>0</span>
         </button>
 
-        <div class="btn-row">
-          <button class="btn-secondary" data-action="play-steps">
-            <svg viewBox="0 0 24 24"><polygon points="6 4 20 12 6 20 6 4"/></svg>
-            <span>Play</span>
-          </button>
-          <button class="btn-secondary" data-action="export-png">
-            <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            <span>PNG</span>
-          </button>
-        </div>
+        <button class="btn-secondary" data-action="play-steps">
+          <svg viewBox="0 0 24 24"><polygon points="6 4 20 12 6 20 6 4"/></svg>
+          <span>Play</span>
+        </button>
 
         <button class="btn-link" data-action="clear-pending">Clear draft</button>
 
@@ -446,7 +440,10 @@
           return `<div class="step-row${active}" data-idx="${i}">
             <span class="step-idx">#${i + 1}</span>
             <span class="step-meta">${moves} ${moves === 1 ? "move" : "moves"}</span>
-            <button class="step-del" data-del-step="${i}" aria-label="Delete step">
+            <button class="step-png" data-step-png="${i}" aria-label="Export step PNG" title="Export step ${i + 1} as PNG">
+              <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            </button>
+            <button class="step-del" data-del-step="${i}" aria-label="Delete step" title="Delete step ${i + 1}">
               <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
             </button>
           </div>`;
@@ -454,6 +451,11 @@
         stepListEl.querySelectorAll("[data-del-step]").forEach(b => {
           b.addEventListener("click", () => {
             window.HAX.deleteStep(parseInt(b.dataset.delStep, 10));
+          });
+        });
+        stepListEl.querySelectorAll("[data-step-png]").forEach(b => {
+          b.addEventListener("click", () => {
+            window.HAX.exportStepPNG(parseInt(b.dataset.stepPng, 10));
           });
         });
       }
@@ -563,8 +565,10 @@
         refresh();
         renderRadius();
 
-        // Tick badge updates too (in case state changes outside of events)
-        setInterval(refresh, 250);
+        // Badge keeps ticking for live niceties, but renderStepList stays
+        // event-driven — re-rendering the list every 250ms blew away hover
+        // state on step rows (visible as a flicker on the delete/PNG icons).
+        setInterval(renderBadge, 250);
       }, 50);
     })();
 
