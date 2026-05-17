@@ -76,10 +76,31 @@
 
     <div class="hr"></div>
 
+    <!-- Plays section (saved tactical analyses, LocalStorage) -->
+    <section class="sec" data-sec-id="plays">
+      <button class="sec-head" data-collapsible type="button">
+        <span class="sec-num">01</span>
+        <span class="sec-title">Plays</span>
+        <span class="sec-pill" data-plays-count>0</span>
+        <svg class="sec-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="sec-body plays-body">
+        <button class="btn-primary" data-action="save-play">
+          <svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          <span data-save-play-label>Save play</span>
+        </button>
+        <div class="play-actions-row">
+          <button class="btn-link" data-action="save-as-play">Save as new</button>
+          <button class="btn-link" data-action="start-fresh-play">Start fresh</button>
+        </div>
+        <div class="play-list" data-play-list></div>
+      </div>
+    </section>
+
     <!-- Shortcuts section -->
     <section class="sec" data-sec-id="shortcuts">
       <button class="sec-head" data-collapsible type="button">
-        <span class="sec-num">01</span>
+        <span class="sec-num">02</span>
         <span class="sec-title">Shortcuts</span>
         <svg class="sec-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
       </button>
@@ -97,7 +118,7 @@
     <!-- Field section -->
     <section class="sec" data-sec-id="field">
       <button class="sec-head" data-collapsible type="button">
-        <span class="sec-num">02</span>
+        <span class="sec-num">03</span>
         <span class="sec-title">Field</span>
         <svg class="sec-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
       </button>
@@ -117,7 +138,7 @@
     <!-- Actions section -->
     <section class="sec" data-sec-id="actions">
       <button class="sec-head" data-collapsible type="button">
-        <span class="sec-num">03</span>
+        <span class="sec-num">04</span>
         <span class="sec-title">Actions</span>
         <svg class="sec-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
       </button>
@@ -145,7 +166,7 @@
     <!-- Steps section -->
     <section class="sec" data-sec-id="steps">
       <button class="sec-head" data-collapsible type="button">
-        <span class="sec-num">04</span>
+        <span class="sec-num">05</span>
         <span class="sec-title">Steps</span>
         <span class="sec-pill" data-step-count>0</span>
         <svg class="sec-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
@@ -570,6 +591,119 @@
         // event-driven — re-rendering the list every 250ms blew away hover
         // state on step rows (visible as a flicker on the delete/PNG icons).
         setInterval(renderBadge, 250);
+      }, 50);
+    })();
+
+    // ---- Plays (LocalStorage-backed save/load) ---------------------------
+    (function () {
+      const playListEl    = document.querySelector("[data-play-list]");
+      const playsCountEl  = document.querySelector("[data-plays-count]");
+      const saveLabelEl   = document.querySelector("[data-save-play-label]");
+      const saveBtn       = document.querySelector('[data-action="save-play"]');
+      const saveAsBtn     = document.querySelector('[data-action="save-as-play"]');
+      const startFreshBtn = document.querySelector('[data-action="start-fresh-play"]');
+      const fieldPresetEl = document.querySelector("#field-preset");
+
+      function escapeHtml(s) {
+        return String(s)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#39;");
+      }
+
+      function renderPlays() {
+        if (!window.HAX) return;
+        const plays = window.HAX.listPlays();
+        const currentId = window.HAX.getCurrentPlayId();
+        const current = window.HAX.getCurrentPlay();
+
+        playsCountEl.textContent = plays.length;
+        saveLabelEl.textContent = current ? `Save "${current.name}"` : "Save play";
+
+        if (plays.length === 0) {
+          playListEl.innerHTML = '<div class="play-empty">No saved plays yet. Build your tactic and click <b>Save play</b>.</div>';
+          return;
+        }
+
+        playListEl.innerHTML = plays.map(p => {
+          const active = p.id === currentId ? " active" : "";
+          const meta = `${p.pieceCount} ${p.pieceCount === 1 ? "piece" : "pieces"} · ${p.stepCount} ${p.stepCount === 1 ? "step" : "steps"}`;
+          const name = escapeHtml(p.name);
+          return `<div class="play-row${active}" data-play-load="${p.id}" title="Load ${name}">
+            <div class="play-text">
+              <span class="play-name">${name}</span>
+              <span class="play-meta">${meta}</span>
+            </div>
+            <button class="play-rename" data-play-rename="${p.id}" aria-label="Rename" title="Rename">
+              <svg viewBox="0 0 24 24"><path d="M3 21h4l11-11-4-4L3 17v4z"/><path d="M14 7l4 4"/></svg>
+            </button>
+            <button class="play-del" data-play-del="${p.id}" aria-label="Delete" title="Delete">
+              <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
+          </div>`;
+        }).join("");
+
+        playListEl.querySelectorAll("[data-play-load]").forEach(el => {
+          el.addEventListener("click", (e) => {
+            if (e.target.closest("button")) return;
+            window.HAX.loadPlay(el.dataset.playLoad);
+          });
+        });
+        playListEl.querySelectorAll("[data-play-rename]").forEach(b => {
+          b.addEventListener("click", (e) => {
+            e.stopPropagation();
+            const id = b.dataset.playRename;
+            const cur = window.HAX.listPlays().find(p => p.id === id);
+            if (!cur) return;
+            const nn = window.prompt("Rename play:", cur.name);
+            if (nn !== null) window.HAX.renamePlay(id, nn);
+          });
+        });
+        playListEl.querySelectorAll("[data-play-del]").forEach(b => {
+          b.addEventListener("click", (e) => {
+            e.stopPropagation();
+            const id = b.dataset.playDel;
+            const cur = window.HAX.listPlays().find(p => p.id === id);
+            const name = cur?.name || "this play";
+            if (window.confirm(`Delete "${name}"? This cannot be undone.`)) {
+              window.HAX.deletePlay(id);
+            }
+          });
+        });
+      }
+
+      // Loading a play with a different field preset must reflect in the
+      // sidebar <select> — keep it synced with state.fieldKey.
+      function syncFieldPreset() {
+        if (!window.HAX || !fieldPresetEl) return;
+        const fk = window.HAX.state && window.HAX.state.fieldKey;
+        if (fk && fieldPresetEl.value !== fk) fieldPresetEl.value = fk;
+      }
+
+      const waiter = setInterval(() => {
+        if (!window.HAX) return;
+        clearInterval(waiter);
+
+        saveBtn.addEventListener("click", () => window.HAX.savePlay());
+        saveAsBtn.addEventListener("click", () => {
+          const name = window.prompt("Save play as:", "");
+          if (name === null) return;
+          window.HAX.savePlayAs(name);
+        });
+        startFreshBtn.addEventListener("click", () => {
+          if (window.confirm("Start a fresh play? Current state will be replaced with the default lineup.")) {
+            window.HAX.startFreshPlay();
+          }
+        });
+
+        window.addEventListener("hax-state-changed", () => {
+          renderPlays();
+          syncFieldPreset();
+        });
+        renderPlays();
+        syncFieldPreset();
       }, 50);
     })();
 

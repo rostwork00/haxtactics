@@ -577,6 +577,97 @@ body.sidebar-collapsed .side-expand {
 .btn-link:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* Step list */
+/* ============================================================
+   Plays section (LocalStorage-backed save/load)
+   ============================================================ */
+.plays-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.play-actions-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+.play-actions-row .btn-link { padding: 4px 0; }
+
+.play-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 6px;
+  border-top: 1px solid var(--hairline);
+  padding-top: 8px;
+  max-height: 280px;
+  overflow-y: auto;
+}
+.play-empty {
+  font: 400 11px/1.5 var(--font-sans);
+  color: var(--text-mute);
+  padding: 4px 2px 6px 2px;
+  letter-spacing: 0.01em;
+}
+.play-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 150ms;
+}
+.play-row:hover { background: var(--accent-ghost); }
+.play-row.active {
+  background: var(--accent-soft);
+  outline: 1px solid var(--accent);
+}
+.play-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.play-name {
+  font: 500 12px/1.2 var(--font-sans);
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.play-meta {
+  font: 400 10px/1 var(--font-mono);
+  color: var(--text-mute);
+  letter-spacing: 0.03em;
+}
+.play-row.active .play-name { color: var(--accent); }
+.play-rename,
+.play-del {
+  appearance: none;
+  background: transparent;
+  border: none;
+  color: var(--text-mute);
+  width: 20px; height: 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: inline-grid;
+  place-items: center;
+  opacity: 0;
+  flex-shrink: 0;
+  transition: opacity 150ms, color 150ms, background 150ms;
+}
+.play-row:hover .play-rename,
+.play-row:hover .play-del { opacity: 1; }
+.play-rename:hover { background: var(--accent-ghost); color: var(--accent); }
+.play-del:hover { background: rgba(229,72,77,0.10); color: var(--red); }
+.play-rename svg,
+.play-del svg {
+  width: 11px; height: 11px;
+  stroke: currentColor; fill: none;
+  stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+}
+
 .step-list {
   display: flex;
   flex-direction: column;

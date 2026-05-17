@@ -134,7 +134,16 @@ const state = {
   selectedAnnotation: null,
   hoverAnnotation:    null,
   draggingAnnotation: null, // { annotation, lastMx, lastMy, before }
+
+  // ---- Persistence ---------------------------------------------------
+  currentPlayId: null,      // id of the saved play this state was loaded from
 };
+
+/* ---------- Persistence (localStorage) ----------------------------------- */
+const PLAYS_STORAGE_KEY = "hax_plays_v1";
+const DRAFT_STORAGE_KEY = "hax_draft_v1";
+const PLAYS_SCHEMA_VERSION = 1;
+const AUTOSAVE_DEBOUNCE_MS = 600;
 
 /* ---------- Utility ------------------------------------------------------ */
 function dist(ax, ay, bx, by) {
@@ -1083,6 +1092,268 @@ function maxRadiusPx(kind) {
   return frac * base;
 }
 
+// ---- Serialize / deserialize current state as a "play" ------------------
+function serializePlay() {
+  return {
+    version: PLAYS_SCHEMA_VERSION,
+    fieldKey: state.fieldKey,
+    mode: state.mode,
+    maxRadius: { player: state.maxRadius.player, ball: state.maxRadius.ball },
+    nextId: state.nextId,
+    stepIdCounter: state.stepIdCounter,
+    pieces: state.pieces.map(p => ({
+      id: p.id,
+      kind: p.kind,
+      label: p.label,
+      fx: p.fx,
+      fy: p.fy,
+      stepStartFx: p.stepStartFx,
+      stepStartFy: p.stepStartFy,
+      arrows: p.arrows.map(a => ({ ...a })),
+    })),
+    steps: state.steps.map(s => ({
+      id: s.id,
+      moves: s.moves.map(m => ({ ...m })),
+    })),
+    annotations: state.annotations.map(a => ({ ...a })),
+  };
+}
+
+function deserializePlay(data) {
+  if (!data || typeof data !== "object" || data.version !== PLAYS_SCHEMA_VERSION) {
+    return false;
+  }
+  // Stop any active playback and clear all interaction state up front.
+  if (state.playing) finishPlayback(true);
+
+  state.fieldKey = (data.fieldKey && FIELD_PRESETS[data.fieldKey]) ? data.fieldKey : "classic";
+  state.mode = data.mode === "steps" ? "steps" : "sandbox";
+  state.maxRadius = {
+    player: typeof data.maxRadius?.player === "number" ? data.maxRadius.player : 0.20,
+    ball:   typeof data.maxRadius?.ball   === "number" ? data.maxRadius.ball   : 0.34,
+  };
+  state.stepIdCounter = data.stepIdCounter || 0;
+  state.nextId = data.nextId || 1;
+
+  state.fieldRect = computeFieldRect();
+
+  state.pieces = (data.pieces || []).map(p => ({
+    id: p.id,
+    kind: p.kind,
+    label: p.label ?? null,
+    fx: p.fx, fy: p.fy,
+    stepStartFx: p.stepStartFx ?? p.fx,
+    stepStartFy: p.stepStartFy ?? p.fy,
+    x: 0, y: 0,
+    r: pieceRadiusFor(p.kind),
+    style: PIECE_STYLES[p.kind],
+    arrows: (p.arrows || []).map(a => ({ ...a })),
+    anim: null,
+  }));
+
+  // Backfill nextId so future pieces don't collide with restored ids.
+  for (const p of state.pieces) {
+    if (p.id >= state.nextId) state.nextId = p.id + 1;
+  }
+
+  state.steps = (data.steps || []).map(s => ({
+    id: s.id,
+    moves: (s.moves || []).map(m => ({ ...m })),
+  }));
+
+  state.annotations = (data.annotations || []).map(a => ({ ...a }));
+
+  // Drop all transient interaction state.
+  state.history = [];
+  state.drag = null;
+  state.drawing = null;
+  state.hover = null;
+  state.selectedAnnotation = null;
+  state.hoverAnnotation = null;
+  state.draggingAnnotation = null;
+  state.annotationDraft = null;
+
+  updatePieceScreenCoords();
+
+  notifyStepsChange();
+  return true;
+}
+
+// ---- LocalStorage CRUD --------------------------------------------------
+function getStoredPlays() {
+  try {
+    const raw = localStorage.getItem(PLAYS_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed?.plays) ? parsed.plays : [];
+  } catch {
+    return [];
+  }
+}
+
+function persistStoredPlays(plays) {
+  try {
+    localStorage.setItem(PLAYS_STORAGE_KEY, JSON.stringify({
+      version: PLAYS_SCHEMA_VERSION,
+      plays,
+    }));
+    return true;
+  } catch (e) {
+    console.warn("Could not persist plays:", e);
+    return false;
+  }
+}
+
+function persistDraft() {
+  try {
+    localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify({
+      version: PLAYS_SCHEMA_VERSION,
+      currentPlayId: state.currentPlayId,
+      data: serializePlay(),
+      updated: new Date().toISOString(),
+    }));
+  } catch (e) {
+    console.warn("Could not persist draft:", e);
+  }
+}
+
+function restoreDraftIfAny() {
+  try {
+    const raw = localStorage.getItem(DRAFT_STORAGE_KEY);
+    if (!raw) return false;
+    const draft = JSON.parse(raw);
+    if (!draft || draft.version !== PLAYS_SCHEMA_VERSION || !draft.data) return false;
+    if (!deserializePlay(draft.data)) return false;
+    state.currentPlayId = draft.currentPlayId || null;
+    return true;
+  } catch (e) {
+    console.warn("Could not restore draft:", e);
+    return false;
+  }
+}
+
+let _autosaveTimer = null;
+function scheduleAutosave() {
+  if (_autosaveTimer) clearTimeout(_autosaveTimer);
+  _autosaveTimer = setTimeout(() => {
+    _autosaveTimer = null;
+    if (!state.playing) persistDraft();
+  }, AUTOSAVE_DEBOUNCE_MS);
+}
+
+// ---- High-level play operations -----------------------------------------
+function listStoredPlays() {
+  return getStoredPlays().map(p => ({
+    id: p.id,
+    name: p.name,
+    created: p.created,
+    updated: p.updated,
+    pieceCount: (p.data?.pieces || []).length,
+    stepCount:  (p.data?.steps  || []).length,
+  }));
+}
+
+function savePlayAs(rawName) {
+  const name = String(rawName || "").trim() || "Untitled play";
+  const now = new Date().toISOString();
+  const entry = {
+    id: `play_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    name,
+    created: now,
+    updated: now,
+    data: serializePlay(),
+  };
+  const plays = getStoredPlays();
+  plays.unshift(entry);   // newest first
+  persistStoredPlays(plays);
+  state.currentPlayId = entry.id;
+  notifyStepsChange();
+  return entry;
+}
+
+function savePlay() {
+  if (state.currentPlayId) {
+    const plays = getStoredPlays();
+    const i = plays.findIndex(p => p.id === state.currentPlayId);
+    if (i >= 0) {
+      plays[i] = {
+        ...plays[i],
+        data: serializePlay(),
+        updated: new Date().toISOString(),
+      };
+      persistStoredPlays(plays);
+      notifyStepsChange();
+      return plays[i];
+    }
+    // Saved entry vanished (manually cleared?) — fall through to fresh save.
+    state.currentPlayId = null;
+  }
+  const name = window.prompt("Save play as:", "");
+  if (name === null) return null;        // cancelled
+  return savePlayAs(name);
+}
+
+function loadStoredPlay(id) {
+  const plays = getStoredPlays();
+  const entry = plays.find(p => p.id === id);
+  if (!entry) return false;
+  if (!deserializePlay(entry.data)) return false;
+  state.currentPlayId = id;
+  return true;
+}
+
+function deleteStoredPlay(id) {
+  const plays = getStoredPlays().filter(p => p.id !== id);
+  persistStoredPlays(plays);
+  if (state.currentPlayId === id) state.currentPlayId = null;
+  notifyStepsChange();
+}
+
+function renameStoredPlay(id, newName) {
+  const plays = getStoredPlays();
+  const i = plays.findIndex(p => p.id === id);
+  if (i < 0) return false;
+  plays[i] = {
+    ...plays[i],
+    name: String(newName || "").trim() || "Untitled play",
+    updated: new Date().toISOString(),
+  };
+  persistStoredPlays(plays);
+  notifyStepsChange();
+  return true;
+}
+
+function startFreshPlay() {
+  if (state.playing) finishPlayback(true);
+  state.currentPlayId = null;
+  state.fieldKey = "classic";
+  state.mode = "sandbox";
+  state.maxRadius = { player: 0.20, ball: 0.20 * 1.7 };
+  state.fieldRect = computeFieldRect();
+  state.pieces = [];
+  state.steps = [];
+  state.annotations = [];
+  state.stepIdCounter = 0;
+  state.nextId = 1;
+  state.history = [];
+  state.drag = null;
+  state.drawing = null;
+  state.hover = null;
+  state.selectedAnnotation = null;
+  state.hoverAnnotation = null;
+  state.draggingAnnotation = null;
+  state.annotationDraft = null;
+  setupDefaultLineup();
+  notifyStepsChange();
+}
+
+function getCurrentPlay() {
+  if (!state.currentPlayId) return null;
+  const plays = getStoredPlays();
+  const found = plays.find(p => p.id === state.currentPlayId);
+  return found ? { id: found.id, name: found.name, updated: found.updated } : null;
+}
+
 function notifyStepsChange() {
   // Debounced via microtask so a burst of operations only fires once.
   if (notifyStepsChange._q) return;
@@ -1090,6 +1361,7 @@ function notifyStepsChange() {
   queueMicrotask(() => {
     notifyStepsChange._q = false;
     window.dispatchEvent(new CustomEvent("hax-state-changed"));
+    scheduleAutosave();
   });
 }
 
@@ -2214,6 +2486,17 @@ function wireUI() {
     exportPNG:    exportSnapshotPNG,
     exportStepPNG,
 
+    // Plays (LocalStorage-backed)
+    listPlays:        listStoredPlays,
+    savePlay,
+    savePlayAs,
+    loadPlay:         loadStoredPlay,
+    deletePlay:       deleteStoredPlay,
+    renamePlay:       renameStoredPlay,
+    startFreshPlay,
+    getCurrentPlay,
+    getCurrentPlayId: () => state.currentPlayId,
+
     // Mode
     getMode:      () => state.mode,
     setMode:      (v) => {
@@ -2341,7 +2624,10 @@ function init() {
   state.canvas.addEventListener("dblclick", onDoubleClick);
 
   wireUI();
-  setupDefaultLineup();
+  // Restore auto-saved draft if it exists; otherwise spawn the default lineup.
+  if (!restoreDraftIfAny()) {
+    setupDefaultLineup();
+  }
 
   requestAnimationFrame(render);
 }
