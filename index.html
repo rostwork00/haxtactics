@@ -414,7 +414,6 @@
       const playBtn      = document.querySelector('[data-action="play-steps"]');
       const saveBtn      = document.querySelector('[data-action="save-step"]');
       const clearBtn     = document.querySelector('[data-action="clear-pending"]');
-      const pngBtn       = document.querySelector('[data-action="export-png"]');
       const radiusInput  = document.querySelector('[data-radius-input]');
       const radiusVal    = document.querySelector('[data-radius-val]');
       const ballVal      = document.querySelector('[data-ball-val]');
@@ -497,7 +496,6 @@
         saveBtn.disabled = playing || pending === 0 || mode !== "steps";
         clearBtn.disabled = playing || pending === 0;
         playBtn.disabled = mode !== "steps" || steps === 0;
-        pngBtn.disabled = false;
 
         // Update mode segmented control
         document.querySelectorAll("[data-mode-set]").forEach(b => {
@@ -529,7 +527,6 @@
 
         saveBtn.addEventListener("click", () => window.HAX.saveStep());
         clearBtn.addEventListener("click", () => window.HAX.clearPendingArrows());
-        pngBtn.addEventListener("click", () => window.HAX.exportPNG());
         playBtn.addEventListener("click", () => {
           if (window.HAX.isPlaying()) window.HAX.stopPlayback();
           else window.HAX.playSteps();
