@@ -599,9 +599,7 @@ body.sidebar-collapsed .side-expand {
   margin-top: 6px;
   border-top: 1px solid var(--hairline);
   padding-top: 8px;
-  max-height: 280px;
-  overflow-y: auto;
-  overflow-x: hidden;
+  flex-shrink: 0;
 }
 .play-empty {
   font: 400 11px/1.5 var(--font-sans);
@@ -616,6 +614,7 @@ body.sidebar-collapsed .side-expand {
   padding: 8px 6px;
   border-radius: 6px;
   cursor: pointer;
+  flex-shrink: 0;
   transition: background 150ms;
 }
 .play-row:hover { background: var(--accent-ghost); }
