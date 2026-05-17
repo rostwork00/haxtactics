@@ -874,9 +874,18 @@ function drawArrows() {
       } else {
         const tipX = f.x + a.fx2 * f.w;
         const tipY = f.y + a.fy2 * f.h;
+        // Pull the tip back to the piece's edge only when the stored
+        // tip sits at the piece's centre — that's the case for arrows
+        // synthesised from saved-step moves. Arrows created from a live
+        // sandbox draw already have the radius offset baked in at
+        // creation time (finalizeArrow), so they're left alone here to
+        // avoid double-offsetting and falling short of the piece.
+        const pieceX = f.x + p.fx * f.w;
+        const pieceY = f.y + p.fy * f.h;
+        const tipAtCenter = Math.hypot(tipX - pieceX, tipY - pieceY) < p.r * 0.5;
         const dxL = tipX - x1, dyL = tipY - y1;
         const lenL = Math.hypot(dxL, dyL);
-        if (lenL > p.r + 4) {
+        if (tipAtCenter && lenL > p.r + 4) {
           x2 = tipX - (dxL / lenL) * (p.r + 2);
           y2 = tipY - (dyL / lenL) * (p.r + 2);
         } else {

@@ -601,6 +601,7 @@ body.sidebar-collapsed .side-expand {
   padding-top: 8px;
   max-height: 280px;
   overflow-y: auto;
+  overflow-x: hidden;
 }
 .play-empty {
   font: 400 11px/1.5 var(--font-sans);
@@ -621,6 +622,7 @@ body.sidebar-collapsed .side-expand {
 .play-row.active {
   background: var(--accent-soft);
   outline: 1px solid var(--accent);
+  outline-offset: -1px;
 }
 .play-text {
   flex: 1;
@@ -694,6 +696,7 @@ body.sidebar-collapsed .side-expand {
 .step-row.active {
   background: var(--accent-soft);
   outline: 1px solid var(--accent);
+  outline-offset: -1px;
 }
 .step-idx {
   font: 600 11px/1 var(--font-mono);
