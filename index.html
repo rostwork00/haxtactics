@@ -76,18 +76,18 @@
 
     <div class="hr"></div>
 
-    <!-- Plays section (saved tactical analyses, LocalStorage) -->
+    <!-- Tactics section (saved tactical analyses, LocalStorage) -->
     <section class="sec" data-sec-id="plays">
       <button class="sec-head" data-collapsible type="button">
         <span class="sec-num">01</span>
-        <span class="sec-title">Plays</span>
+        <span class="sec-title">Tactics</span>
         <span class="sec-pill" data-plays-count>0</span>
         <svg class="sec-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
       </button>
       <div class="sec-body plays-body">
         <button class="btn-primary" data-action="save-play">
           <svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-          <span data-save-play-label>Save play</span>
+          <span data-save-play-label>Save tactic</span>
         </button>
         <div class="play-actions-row">
           <button class="btn-link" data-action="save-as-play">Save as new</button>
@@ -346,8 +346,14 @@
     // doesn't snap at the end (the previous version animated mostly
     // invisible "empty" max-height before reaching real content).
     (function () {
-      const KEY = "hax_sec_collapsed_v1";
-      const DEFAULT_COLLAPSED = { steps: true };
+      const KEY = "hax_sec_collapsed_v2";
+      const DEFAULT_COLLAPSED = {
+        plays:     true,
+        shortcuts: true,
+        field:     true,
+        actions:   true,
+        steps:     true,
+      };
       let collapsed = {};
       try { collapsed = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch {}
 
@@ -620,10 +626,10 @@
         const current = window.HAX.getCurrentPlay();
 
         playsCountEl.textContent = plays.length;
-        saveLabelEl.textContent = current ? `Save "${current.name}"` : "Save play";
+        saveLabelEl.textContent = current ? `Save "${current.name}"` : "Save tactic";
 
         if (plays.length === 0) {
-          playListEl.innerHTML = '<div class="play-empty">No saved plays yet. Build your tactic and click <b>Save play</b>.</div>';
+          playListEl.innerHTML = '<div class="play-empty">No saved tactics yet. Build your tactic and click <b>Save tactic</b>.</div>';
           return;
         }
 
@@ -657,7 +663,7 @@
             const id = b.dataset.playRename;
             const cur = window.HAX.listPlays().find(p => p.id === id);
             if (!cur) return;
-            const nn = window.prompt("Rename play:", cur.name);
+            const nn = window.prompt("Rename tactic:", cur.name);
             if (nn !== null) window.HAX.renamePlay(id, nn);
           });
         });
@@ -688,12 +694,12 @@
 
         saveBtn.addEventListener("click", () => window.HAX.savePlay());
         saveAsBtn.addEventListener("click", () => {
-          const name = window.prompt("Save play as:", "");
+          const name = window.prompt("Save tactic as:", "");
           if (name === null) return;
           window.HAX.savePlayAs(name);
         });
         startFreshBtn.addEventListener("click", () => {
-          if (window.confirm("Start a fresh play? Current state will be replaced with the default lineup.")) {
+          if (window.confirm("Start fresh? Current tactic will be replaced with the default lineup.")) {
             window.HAX.startFreshPlay();
           }
         });

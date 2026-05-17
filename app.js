@@ -145,6 +145,11 @@ const DRAFT_STORAGE_KEY = "hax_draft_v1";
 const PLAYS_SCHEMA_VERSION = 1;
 const AUTOSAVE_DEBOUNCE_MS = 600;
 
+// Soft limits so a runaway loop or copy-paste storm can't blow past
+// localStorage budgets or clog the UI with hundreds of rows.
+const MAX_TACTICS = 10;
+const MAX_STEPS_PER_TACTIC = 10;
+
 /* ---------- Utility ------------------------------------------------------ */
 function dist(ax, ay, bx, by) {
   return Math.hypot(ax - bx, ay - by);
@@ -1263,7 +1268,12 @@ function listStoredPlays() {
 }
 
 function savePlayAs(rawName) {
-  const name = String(rawName || "").trim() || "Untitled play";
+  const plays = getStoredPlays();
+  if (plays.length >= MAX_TACTICS) {
+    window.alert(`Maximum ${MAX_TACTICS} saved tactics. Delete one to make room for a new tactic.`);
+    return null;
+  }
+  const name = String(rawName || "").trim() || "Untitled tactic";
   const now = new Date().toISOString();
   const entry = {
     id: `play_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
@@ -1272,7 +1282,6 @@ function savePlayAs(rawName) {
     updated: now,
     data: serializePlay(),
   };
-  const plays = getStoredPlays();
   plays.unshift(entry);   // newest first
   persistStoredPlays(plays);
   state.currentPlayId = entry.id;
@@ -1297,7 +1306,7 @@ function savePlay() {
     // Saved entry vanished (manually cleared?) — fall through to fresh save.
     state.currentPlayId = null;
   }
-  const name = window.prompt("Save play as:", "");
+  const name = window.prompt("Save tactic as:", "");
   if (name === null) return null;        // cancelled
   return savePlayAs(name);
 }
@@ -1399,6 +1408,11 @@ function saveStep() {
   const anyMove = moves.some(m =>
     Math.hypot(m.toFx - m.fromFx, m.toFy - m.fromFy) > 0.001);
   if (!anyMove) return;
+
+  if (state.steps.length >= MAX_STEPS_PER_TACTIC) {
+    window.alert(`Maximum ${MAX_STEPS_PER_TACTIC} steps per tactic. Delete an earlier step to add a new one.`);
+    return;
+  }
 
   state.steps.push({ id: ++state.stepIdCounter, moves });
   // Commit: each piece's new stepStart is its current resting position;
