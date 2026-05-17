@@ -825,6 +825,25 @@ function drawStraightArrow(x1, y1, x2, y2, color, opts = {}) {
   ctx.restore();
 }
 
+// Build the chain of arrows that traces every saved-step move for one
+// piece, in order. Used to keep cumulative arrows visible in steps mode
+// after saves, deletes, and natural playback completion.
+function buildCumulativeArrowsForPiece(piece) {
+  const arrows = [];
+  for (const step of state.steps) {
+    const m = step.moves.find(x => x.pieceId === piece.id);
+    if (!m) continue;
+    if (Math.hypot(m.toFx - m.fromFx, m.toFy - m.fromFy) > 0.001) {
+      arrows.push({
+        fx1: m.fromFx, fy1: m.fromFy,
+        fx2: m.toFx,   fy2: m.toFy,
+        width: 3.25, glow: false,
+      });
+    }
+  }
+  return arrows;
+}
+
 function drawArrows() {
   const f = state.fieldRect;
   for (const p of state.pieces) {
@@ -835,16 +854,25 @@ function drawArrows() {
       const y1 = f.y + a.fy1 * f.h;
       // intermediate arrows extend their tip to the next arrow's start
       // (i.e. the actual past piece position) so the chain has no gaps.
-      // the last arrow uses its stored offset tip so the piece doesn't
-      // cover the arrowhead.
+      // the last arrow lands at the piece's current position — pull its
+      // tip back to the circle edge so the arrowhead is visible instead
+      // of being hidden under the player.
       let x2, y2;
       if (i < total - 1) {
         const next = p.arrows[i + 1];
         x2 = f.x + next.fx1 * f.w;
         y2 = f.y + next.fy1 * f.h;
       } else {
-        x2 = f.x + a.fx2 * f.w;
-        y2 = f.y + a.fy2 * f.h;
+        const tipX = f.x + a.fx2 * f.w;
+        const tipY = f.y + a.fy2 * f.h;
+        const dxL = tipX - x1, dyL = tipY - y1;
+        const lenL = Math.hypot(dxL, dyL);
+        if (lenL > p.r + 4) {
+          x2 = tipX - (dxL / lenL) * (p.r + 2);
+          y2 = tipY - (dyL / lenL) * (p.r + 2);
+        } else {
+          x2 = tipX; y2 = tipY;
+        }
       }
       drawStraightArrow(x1, y1, x2, y2, arrowColorAt(p.kind, i, total),
         { width: a.width, glow: a.glow });
@@ -961,9 +989,10 @@ function finalizeArrow(drawing) {
     width: 3.25,
     glow: false,
   };
-  // In steps mode: 1 arrow per piece (replace). In sandbox: chain allowed.
+  // In steps mode: keep the cumulative saved-step arrows visible and add
+  // the new pending arrow on top. In sandbox: free-form chain.
   if (state.mode === "steps") {
-    piece.arrows = [arrow];
+    piece.arrows = [...buildCumulativeArrowsForPiece(piece), arrow];
   } else {
     piece.arrows.push(arrow);
   }
@@ -1091,11 +1120,13 @@ function saveStep() {
   if (!anyMove) return;
 
   state.steps.push({ id: ++state.stepIdCounter, moves });
-  // Commit: each piece's new stepStart is its current resting position.
+  // Commit: each piece's new stepStart is its current resting position;
+  // arrows snap to the cumulative saved-step chain so the user keeps
+  // seeing every move so far.
   state.pieces.forEach(p => {
     p.stepStartFx = p.fx;
     p.stepStartFy = p.fy;
-    p.arrows = [];
+    p.arrows = buildCumulativeArrowsForPiece(p);
   });
   state.history = [];
   notifyStepsChange();
@@ -1104,7 +1135,8 @@ function saveStep() {
 function clearPendingArrows() {
   if (state.playing) return;
   state.pieces.forEach(p => {
-    p.arrows = [];
+    // Drop the pending arrow but keep the cumulative saved-step trail.
+    p.arrows = buildCumulativeArrowsForPiece(p);
     p.fx = p.stepStartFx;
     p.fy = p.stepStartFy;
     p.anim = null;
@@ -1136,9 +1168,13 @@ function deleteStep(idx) {
       if (m) {
         p.fx = m.toFx; p.fy = m.toFy;
         p.stepStartFx = m.toFx; p.stepStartFy = m.toFy;
-        p.arrows = []; p.anim = null;
+        p.anim = null;
       }
+      // Rebuild every piece's cumulative trail against the trimmed chain.
+      p.arrows = buildCumulativeArrowsForPiece(p);
     });
+  } else {
+    state.pieces.forEach(p => { p.arrows = []; });
   }
   notifyStepsChange();
 }
@@ -1261,22 +1297,10 @@ function finishPlayback(restorePositions = true) {
       r.piece.stepStartFy = r.stepStartFy;
       r.piece.anim = null;
     });
-    // Overlay the last step's move as a visible arrow on each piece.
-    const lastStep = state.steps[state.steps.length - 1];
-    if (lastStep) {
-      state.pieces.forEach(p => {
-        const m = lastStep.moves.find(x => x.pieceId === p.id);
-        if (m && Math.hypot(m.toFx - m.fromFx, m.toFy - m.fromFy) > 0.001) {
-          p.arrows = [{
-            fx1: m.fromFx, fy1: m.fromFy,
-            fx2: m.toFx,   fy2: m.toFy,
-            width: 3.25, glow: false,
-          }];
-        } else {
-          p.arrows = [];
-        }
-      });
-    }
+    // Overlay every saved step as a cumulative arrow trail on each piece.
+    state.pieces.forEach(p => {
+      p.arrows = buildCumulativeArrowsForPiece(p);
+    });
   }
 
   state.playing = null;
@@ -2197,18 +2221,19 @@ function wireUI() {
       if (state.mode === next) return;
       state.mode = next;
       if (next === "steps") {
-        // Entering steps mode: collapse any existing arrow chains to the
-        // last segment so each piece has at most one planned move, and
-        // re-anchor stepStart to the current resting position.
+        // Entering steps mode: keep the most recent sandbox arrow as the
+        // pending move for the next step, surface every prior saved step
+        // as cumulative arrows on top of it, and re-anchor stepStart.
         state.pieces.forEach(p => {
-          if (p.arrows.length > 1) p.arrows = [p.arrows[p.arrows.length - 1]];
-          if (p.arrows.length === 0) {
+          const pending = p.arrows.length > 0 ? p.arrows[p.arrows.length - 1] : null;
+          const cumulative = buildCumulativeArrowsForPiece(p);
+          p.arrows = pending ? [...cumulative, pending] : cumulative;
+          if (pending) {
+            p.stepStartFx = pending.fx1;
+            p.stepStartFy = pending.fy1;
+          } else {
             p.stepStartFx = p.fx;
             p.stepStartFy = p.fy;
-          } else {
-            // arrow exists — stepStart should be the arrow's origin
-            p.stepStartFx = p.arrows[0].fx1;
-            p.stepStartFy = p.arrows[0].fy1;
           }
         });
       } else {
