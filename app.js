@@ -224,7 +224,16 @@ function resize() {
   const bottomTools = parseFloat(cs.getPropertyValue("--canvas-bottom-toolbar"));
   state.bottomStripH = isFinite(strip) && strip > 0 ? strip : 110;
   state.topInset = isFinite(topInset) && topInset > 0 ? topInset : 30;
-  state.bottomToolbarH = isFinite(bottomTools) && bottomTools >= 0 ? bottomTools : 0;
+  // Measure the annotation toolbar directly — it wraps to multiple rows
+  // on narrow viewports, so the static CSS variable underestimates its
+  // real height and the field would tuck underneath. Fall back to the
+  // CSS-declared value if the bar isn't in the DOM yet.
+  const annotBar = document.querySelector(".annot-bar");
+  if (annotBar && annotBar.offsetHeight > 0) {
+    state.bottomToolbarH = annotBar.offsetHeight + 18;
+  } else {
+    state.bottomToolbarH = isFinite(bottomTools) && bottomTools >= 0 ? bottomTools : 0;
+  }
 
   layoutDispensers();
   snapDispenserItems();
@@ -2638,6 +2647,12 @@ function init() {
   // ResizeObserver — catches layout changes like sidebar collapse / focus mode
   if (typeof ResizeObserver !== "undefined") {
     new ResizeObserver(resize).observe(state.canvas);
+    // Also watch the annotation toolbar: it wraps to multiple rows on
+    // narrow viewports and grows when the text tool reveals font/size
+    // controls. Every change should reflow the field so it never sits
+    // underneath the bar.
+    const annotBar = document.querySelector(".annot-bar");
+    if (annotBar) new ResizeObserver(resize).observe(annotBar);
   }
 
   state.canvas.addEventListener("mousedown", onMouseDown);
